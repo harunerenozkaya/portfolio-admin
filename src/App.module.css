@@ -1,0 +1,16 @@
+.app {
+    font-family: Arial, sans-serif;
+    color: #333;
+  }
+  
+  .header {
+    background-color: #f0f0f0;
+    padding: 1rem;
+    text-align: center;
+  }
+  
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
