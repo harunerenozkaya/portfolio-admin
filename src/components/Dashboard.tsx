@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
         } else {
           setError('Authentication failed. Please log in again.');
           setLoading(false);
-          navigate('/login');
+          navigate('/admin');
         }
       }
     };

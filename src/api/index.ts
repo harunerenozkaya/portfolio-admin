@@ -10,11 +10,7 @@ const getAuthHeader = () => {
 
 export const api = {
   async getPersonalInformation(): Promise<PersonalInformation> {
-    const response = await fetch(`${BASE_URL}/personal-information`, {
-      headers: {
-        'Authorization': `Basic ${btoa(`${localStorage.getItem('username')}:${localStorage.getItem('password')}`)}`,
-      },
-    });
+    const response = await fetch(`${BASE_URL}/personal-information`);
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error('Personal information not found');
@@ -29,7 +25,7 @@ export const api = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${localStorage.getItem('username')}:${localStorage.getItem('password')}`)}`,
+        'Authorization': getAuthHeader(),
       },
       body: JSON.stringify(data),
     });
@@ -43,7 +39,7 @@ export const api = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${localStorage.getItem('username')}:${localStorage.getItem('password')}`)}`,
+        'Authorization': getAuthHeader(),
       },
       body: JSON.stringify(data),
     });
@@ -53,11 +49,7 @@ export const api = {
   },
 
   async getExperiences(): Promise<Experience[]> {
-    const response = await fetch(`${BASE_URL}/experience`, {
-      headers: {
-        'Authorization': getAuthHeader(),
-      },
-    });
+    const response = await fetch(`${BASE_URL}/experience`);
     if (!response.ok) {
       throw new Error('Failed to fetch experiences');
     }
@@ -107,11 +99,7 @@ export const api = {
   },
 
   async getProjects(): Promise<Project[]> {
-    const response = await fetch(`${BASE_URL}/project`, {
-      headers: {
-        'Authorization': getAuthHeader(),
-      },
-    });
+    const response = await fetch(`${BASE_URL}/project`);
     if (!response.ok) {
       throw new Error('Failed to fetch projects');
     }

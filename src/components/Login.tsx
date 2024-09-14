@@ -13,7 +13,7 @@ const Login: React.FC = () => {
     try {
       const base64Credentials = btoa(`${username}:${password}`);
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/login`, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Authorization': `Basic ${base64Credentials}`,
         },
