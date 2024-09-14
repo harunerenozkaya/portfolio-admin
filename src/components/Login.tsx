@@ -1,26 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Paper, Typography, Box } from '@mui/material';
-import api from '../api/axios';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.get('/login', {
-        auth: { username, password }
+      const base64Credentials = btoa(`${username}:${password}`);
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/login`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${base64Credentials}`,
+        },
       });
-      
-      localStorage.setItem('username', username);
-      localStorage.setItem('password', password);
-      navigate('/admin');
+
+      if (response.ok) {
+        localStorage.setItem('username', username);
+        localStorage.setItem('password', password);
+        console.log('Login successful, navigating to dashboard...');
+        navigate('/dashboard');
+      } else {
+        setErrorMessage('Invalid username or password. Please try again.');
+      }
     } catch (error) {
-      console.error('Login failed:', error);
-      alert('Invalid credentials');
+      console.error('Login error:', error);
+      setErrorMessage('An error occurred. Please try again later.');
     }
   };
 
@@ -30,7 +39,12 @@ const Login: React.FC = () => {
         <Typography variant="h5" component="h2" gutterBottom>
           Login
         </Typography>
-        <form onSubmit={handleSubmit}>
+        {errorMessage && (
+          <Typography color="error" sx={{ mb: 2 }}>
+            {errorMessage}
+          </Typography>
+        )}
+        <form onSubmit={handleLogin}>
           <TextField
             label="Username"
             variant="outlined"
@@ -50,7 +64,13 @@ const Login: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            sx={{ mt: 2 }}
+          >
             Login
           </Button>
         </form>

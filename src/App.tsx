@@ -1,13 +1,28 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Container } from '@mui/material';
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
+import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Container, Button, Box } from '@mui/material';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import ProtectedRoute from './components/ProtectedRoute';
 
 const theme = createTheme({
   // You can customize your theme here
 });
+
+const LogoutButton = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('username');
+    localStorage.removeItem('password');
+    navigate('/login');
+  };
+
+  return (
+    <Button color="inherit" onClick={handleLogout}>
+      Logout
+    </Button>
+  );
+};
 
 const App: React.FC = () => {
   return (
@@ -16,14 +31,19 @@ const App: React.FC = () => {
       <Router>
         <AppBar position="static">
           <Toolbar>
-            <Typography variant="h6">Portfolio Admin Panel</Typography>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Portfolio Admin Panel
+            </Typography>
+            <Routes>
+              <Route path="/dashboard" element={<LogoutButton />} />
+            </Routes>
           </Toolbar>
         </AppBar>
         <Container maxWidth="lg" sx={{ mt: 4 }}>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/admin/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/" element={<Navigate to="/admin" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
         </Container>
       </Router>

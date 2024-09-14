@@ -1,180 +1,282 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Typography, Chip, IconButton, CircularProgress, Snackbar, Alert } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { Typography, Box, CircularProgress, TextField, Button, Grid, Chip, Table, TableBody, TableCell, TableContainer, TableRow, Paper, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { api } from '../api';
-import { PersonalInformation, SocialMediaLink } from '../types';  // Import from types file
+import { PersonalInformation, SocialMediaLink } from '../types';
 
 const PersonalInfo: React.FC = () => {
-  const [personalInfo, setPersonalInfo] = useState<PersonalInformation>({
-    name: '',
-    surname: '',
-    job: '',
-    summary: '',
-    biography: '',
-    skills: [],
-    socialMediaLinks: [],
-    personalImageUrl: '',
-  });
-  const [newSkill, setNewSkill] = useState('');
-  const [newSocialMediaLink, setNewSocialMediaLink] = useState<SocialMediaLink>({ logo: '', url: '' });
-  const [isLoading, setIsLoading] = useState(false);
+  const [personalInfo, setPersonalInfo] = useState<PersonalInformation | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isNewInfo, setIsNewInfo] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState<PersonalInformation | null>(null);
 
   useEffect(() => {
     fetchPersonalInfo();
   }, []);
 
   const fetchPersonalInfo = async () => {
-    setIsLoading(true);
-    setError(null);
     try {
+      console.log("Fetching personal info...");
       const data = await api.getPersonalInformation();
+      console.log("Personal info fetched:", data);
       setPersonalInfo(data);
-      setIsNewInfo(false);
+      setFormData(data);
+      setLoading(false);
     } catch (error) {
+      console.error('Error fetching personal information:', error);
       if (error instanceof Error && error.message === 'Personal information not found') {
-        setIsNewInfo(true);
+        // If 404, set editing mode to true to allow creation
+        setEditing(true);
+        setFormData({
+          name: '',
+          surname: '',
+          job: '',
+          summary: '',
+          biography: '',
+          skills: [],
+          socialMediaLinks: [],
+          personalImageUrl: '',
+        });
       } else {
-        setError('Failed to fetch personal information');
+        setError('Failed to load personal information');
       }
-    } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPersonalInfo(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => prev ? { ...prev, [name]: value } : null);
   };
 
-  const handleAddSkill = () => {
-    if (newSkill.trim()) {
-      setPersonalInfo(prev => ({ ...prev, skills: [...prev.skills, newSkill.trim()] }));
-      setNewSkill('');
-    }
+  const handleSkillsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const skills = e.target.value.split(',').map(skill => skill.trim());
+    setFormData(prev => prev ? { ...prev, skills } : null);
   };
 
-  const handleRemoveSkill = (skillToRemove: string) => {
-    setPersonalInfo(prev => ({ ...prev, skills: prev.skills.filter(skill => skill !== skillToRemove) }));
+  const handleSocialMediaChange = (index: number, field: keyof SocialMediaLink, value: string) => {
+    setFormData(prev => {
+      if (!prev) return null;
+      const newSocialMediaLinks = [...prev.socialMediaLinks];
+      newSocialMediaLinks[index] = { ...newSocialMediaLinks[index], [field]: value };
+      return { ...prev, socialMediaLinks: newSocialMediaLinks };
+    });
   };
 
-  const handleAddSocialMediaLink = () => {
-    if (newSocialMediaLink.logo && newSocialMediaLink.url) {
-      setPersonalInfo(prev => ({ ...prev, socialMediaLinks: [...prev.socialMediaLinks, newSocialMediaLink] }));
-      setNewSocialMediaLink({ logo: '', url: '' });
-    }
+  const handleAddSocialMedia = () => {
+    setFormData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        socialMediaLinks: [...prev.socialMediaLinks, { logo: '', url: '' }]
+      };
+    });
   };
 
-  const handleRemoveSocialMediaLink = (index: number) => {
-    setPersonalInfo(prev => ({
-      ...prev,
-      socialMediaLinks: prev.socialMediaLinks.filter((_, i) => i !== index)
-    }));
+  const handleRemoveSocialMedia = (index: number) => {
+    setFormData(prev => {
+      if (!prev) return null;
+      const newSocialMediaLinks = prev.socialMediaLinks.filter((_, i) => i !== index);
+      return { ...prev, socialMediaLinks: newSocialMediaLinks };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    if (!formData) return;
+
     try {
-      if (isNewInfo) {
-        await api.createPersonalInformation(personalInfo);
-        setSuccessMessage('Personal information created successfully');
-        setIsNewInfo(false);
+      if (personalInfo) {
+        await api.updatePersonalInformation(formData);
       } else {
-        await api.updatePersonalInformation(personalInfo);
-        setSuccessMessage('Personal information updated successfully');
+        await api.createPersonalInformation(formData);
       }
+      setPersonalInfo(formData);
+      setEditing(false);
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message || 'Failed to save personal information');
-      } else {
-        setError('An unexpected error occurred');
-      }
-    } finally {
-      setIsLoading(false);
+      console.error('Error saving personal information:', error);
+      setError('Failed to save personal information');
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return <CircularProgress />;
   }
 
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
+  }
+
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 600, margin: 'auto' }}>
-      <Typography variant="h4" gutterBottom>
-        {isNewInfo ? 'Create Personal Information' : 'Update Personal Information'}
-      </Typography>
-      
-      <TextField fullWidth margin="normal" name="name" label="Name" value={personalInfo.name} onChange={handleInputChange} />
-      <TextField fullWidth margin="normal" name="surname" label="Surname" value={personalInfo.surname} onChange={handleInputChange} />
-      <TextField fullWidth margin="normal" name="job" label="Job" value={personalInfo.job} onChange={handleInputChange} />
-      <TextField fullWidth margin="normal" name="summary" label="Summary" multiline rows={3} value={personalInfo.summary} onChange={handleInputChange} />
-      <TextField fullWidth margin="normal" name="biography" label="Biography" multiline rows={5} value={personalInfo.biography} onChange={handleInputChange} />
-      <TextField fullWidth margin="normal" name="personalImageUrl" label="Personal Image URL" value={personalInfo.personalImageUrl} onChange={handleInputChange} />
-
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6">Skills</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <TextField
-            value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
-            label="New Skill"
-            size="small"
-          />
-          <IconButton onClick={handleAddSkill}><AddIcon /></IconButton>
-        </Box>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {personalInfo.skills.map((skill, index) => (
-            <Chip key={index} label={skill} onDelete={() => handleRemoveSkill(skill)} />
-          ))}
-        </Box>
-      </Box>
-
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6">Social Media Links</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <TextField
-            value={newSocialMediaLink.logo}
-            onChange={(e) => setNewSocialMediaLink(prev => ({ ...prev, logo: e.target.value }))}
-            label="Logo"
-            size="small"
-            sx={{ mr: 1 }}
-          />
-          <TextField
-            value={newSocialMediaLink.url}
-            onChange={(e) => setNewSocialMediaLink(prev => ({ ...prev, url: e.target.value }))}
-            label="URL"
-            size="small"
-          />
-          <IconButton onClick={handleAddSocialMediaLink}><AddIcon /></IconButton>
-        </Box>
-        {personalInfo.socialMediaLinks.map((link, index) => (
-          <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <Typography>{link.logo}: {link.url}</Typography>
-            <IconButton onClick={() => handleRemoveSocialMediaLink(index)}><DeleteIcon /></IconButton>
+    <Box>
+      {!editing ? (
+        <>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell component="th" scope="row">Name</TableCell>
+                  <TableCell>{personalInfo?.name}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">Surname</TableCell>
+                  <TableCell>{personalInfo?.surname}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">Job</TableCell>
+                  <TableCell>{personalInfo?.job}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">Summary</TableCell>
+                  <TableCell>{personalInfo?.summary}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">Biography</TableCell>
+                  <TableCell>{personalInfo?.biography}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">Skills</TableCell>
+                  <TableCell>
+                    {personalInfo?.skills.map((skill, index) => (
+                      <Chip key={index} label={skill} sx={{ mr: 1, mb: 1 }} />
+                    ))}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">Social Media</TableCell>
+                  <TableCell>
+                    {personalInfo?.socialMediaLinks.map((link, index) => (
+                      <Typography key={index}>
+                        {link.logo}: <a href={link.url} target="_blank" rel="noopener noreferrer">{link.url}</a>
+                      </Typography>
+                    ))}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">Personal Image URL</TableCell>
+                  <TableCell>{personalInfo?.personalImageUrl}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Button variant="contained" onClick={() => setEditing(true)} sx={{ mt: 2 }}>
+            Edit Information
+          </Button>
+        </>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Name"
+                name="name"
+                value={formData?.name || ''}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Surname"
+                name="surname"
+                value={formData?.surname || ''}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Job"
+                name="job"
+                value={formData?.job || ''}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Summary"
+                name="summary"
+                multiline
+                rows={3}
+                value={formData?.summary || ''}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Biography"
+                name="biography"
+                multiline
+                rows={5}
+                value={formData?.biography || ''}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Skills (comma-separated)"
+                name="skills"
+                value={formData?.skills.join(', ') || ''}
+                onChange={handleSkillsChange}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Social Media Links</Typography>
+              {formData?.socialMediaLinks.map((link, index) => (
+                <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <TextField
+                    label="Logo"
+                    value={link.logo}
+                    onChange={(e) => handleSocialMediaChange(index, 'logo', e.target.value)}
+                    sx={{ mr: 1, flexGrow: 1 }}
+                  />
+                  <TextField
+                    label="URL"
+                    value={link.url}
+                    onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)}
+                    sx={{ mr: 1, flexGrow: 1 }}
+                  />
+                  <IconButton onClick={() => handleRemoveSocialMedia(index)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+              <Button 
+                startIcon={<AddIcon />} 
+                onClick={handleAddSocialMedia}
+                sx={{ mt: 2 }}
+              >
+                Add Social Media Link
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Personal Image URL"
+                name="personalImageUrl"
+                value={formData?.personalImageUrl || ''}
+                onChange={handleInputChange}
+              />
+            </Grid>
+          </Grid>
+          <Box sx={{ mt: 2 }}>
+            <Button type="submit" variant="contained" sx={{ mr: 1 }}>
+              {personalInfo ? 'Save Changes' : 'Create Personal Information'}
+            </Button>
+            {personalInfo && (
+              <Button variant="outlined" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            )}
           </Box>
-        ))}
-      </Box>
-
-      <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }} disabled={isLoading}>
-        {isLoading ? 'Saving...' : (isNewInfo ? 'Create Personal Information' : 'Update Personal Information')}
-      </Button>
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
-        <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: '100%' }}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
+        </form>
+      )}
     </Box>
   );
 };

@@ -13,3 +13,14 @@ export interface PersonalInformation {
   socialMediaLinks: SocialMediaLink[];
   personalImageUrl: string;
 }
+
+export interface Experience {
+  id: number;
+  companyName: string;
+  companyLogo: string;
+  role: string;
+  startDate: string;
+  endDate: string | null;  // Allow null for ongoing experiences
+  detail: string;
+  usedSkills: string[];
+}

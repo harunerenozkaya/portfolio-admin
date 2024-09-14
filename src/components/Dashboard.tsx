@@ -1,122 +1,67 @@
-import React from 'react';
-import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { Drawer, List, ListItemText, Box, ListItemButton, AppBar, Toolbar, Typography, IconButton, Button, Avatar } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import PersonIcon from '@mui/icons-material/Person';
-import WorkIcon from '@mui/icons-material/Work';
-import CodeIcon from '@mui/icons-material/Code';
-import LogoutIcon from '@mui/icons-material/Logout';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Container, Typography, Box, Grid, Paper, Tabs, Tab } from '@mui/material';
 import PersonalInfo from './PersonalInfo';
 import Experiences from './Experiences';
-import Projects from './Projects';
-
-const drawerWidth = 240;
+import { api } from '../api';
 
 const Dashboard: React.FC = () => {
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
   const navigate = useNavigate();
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        console.log("Checking authentication...");
+        await api.getPersonalInformation();
+        console.log("Authentication successful");
+        setLoading(false);
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        if (error instanceof Error && error.message === 'Personal information not found') {
+          console.log("Personal information not found, but user is authenticated");
+          setLoading(false);
+        } else {
+          setError('Authentication failed. Please log in again.');
+          setLoading(false);
+          navigate('/login');
+        }
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('username');
-    localStorage.removeItem('password');
-    navigate('/login');
-  };
+  if (loading) {
+    return <Typography>Loading...</Typography>;
+  }
 
-  const menuItems = [
-    { text: 'Personal Info', icon: <PersonIcon />, path: 'personal-info' },
-    { text: 'Experiences', icon: <WorkIcon />, path: 'experiences' },
-    { text: 'Projects', icon: <CodeIcon />, path: 'projects' },
-  ];
-
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Avatar sx={{ mr: 2, bgcolor: 'secondary.main' }}>A</Avatar>
-        <Typography variant="subtitle1">Admin User</Typography>
-      </Toolbar>
-      <List>
-        {menuItems.map((item) => (
-          <ListItemButton
-            key={item.text}
-            component={Link}
-            to={`/admin/${item.path}`}
-            selected={location.pathname === `/admin/${item.path}`}
-          >
-            {item.icon}
-            <ListItemText primary={item.text} sx={{ ml: 2 }} />
-          </ListItemButton>
-        ))}
-      </List>
-    </div>
-  );
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
+  }
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Dashboard
-          </Typography>
-          <Button color="inherit" onClick={handleLogout} startIcon={<LogoutIcon />}>
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
+    <Container maxWidth="lg">
+      <Box sx={{ my: 4 }}>
+        <Paper elevation={3} sx={{ p: 3 }}>
+          <Typography variant="h4" component="h1" gutterBottom>Dashboard</Typography>
+          <Tabs value={activeTab} onChange={handleTabChange} aria-label="dashboard tabs">
+            <Tab label="Personal Information" />
+            <Tab label="Experiences" />
+          </Tabs>
+          <Box sx={{ mt: 2 }}>
+            {activeTab === 0 && <PersonalInfo />}
+            {activeTab === 1 && <Experiences />}
+          </Box>
+        </Paper>
       </Box>
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
-      >
-        <Toolbar />
-        <Routes>
-          <Route path="personal-info" element={<PersonalInfo />} />
-          <Route path="experiences" element={<Experiences />} />
-          <Route path="projects" element={<Projects />} />
-        </Routes>
-      </Box>
-    </Box>
+    </Container>
   );
 };
 

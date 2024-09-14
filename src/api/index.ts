@@ -1,6 +1,12 @@
-import { PersonalInformation } from '../types';
+import { PersonalInformation, Experience } from '../types';
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+
+const getAuthHeader = () => {
+  const username = localStorage.getItem('username');
+  const password = localStorage.getItem('password');
+  return `Basic ${btoa(`${username}:${password}`)}`;
+};
 
 export const api = {
   async getPersonalInformation(): Promise<PersonalInformation> {
@@ -46,5 +52,65 @@ export const api = {
     }
   },
 
+  async getExperiences(): Promise<Experience[]> {
+    const response = await fetch(`${BASE_URL}/experience`, {
+      headers: {
+        'Authorization': getAuthHeader(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch experiences');
+    }
+    return response.json();
+  },
+
+  async createExperience(data: Omit<Experience, 'id'>): Promise<Experience> {
+    const response = await fetch(`${BASE_URL}/experience`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create experience');
+    }
+    return response.json();
+  },
+
+  async updateExperience(id: number, data: Omit<Experience, 'id'>): Promise<Experience> {
+    const response = await fetch(`${BASE_URL}/experience/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update experience');
+    }
+    return response.json();
+  },
+
+  async deleteExperience(id: number): Promise<void> {
+    const response = await fetch(`${BASE_URL}/experience/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': getAuthHeader(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete experience');
+    }
+  },
+
   // Add other API methods as needed
 };
+
+// Update these functions to use the api object methods
+export const getExperiences = api.getExperiences;
+export const addExperience = api.createExperience;
+export const updateExperience = api.updateExperience;
+export const deleteExperience = api.deleteExperience;
