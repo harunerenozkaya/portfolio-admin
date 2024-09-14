@@ -1,4 +1,4 @@
-import { PersonalInformation, Experience } from '../types';
+import { PersonalInformation, Experience, Project } from '../types';
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
 
@@ -106,7 +106,59 @@ export const api = {
     }
   },
 
-  // Add other API methods as needed
+  async getProjects(): Promise<Project[]> {
+    const response = await fetch(`${BASE_URL}/project`, {
+      headers: {
+        'Authorization': getAuthHeader(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch projects');
+    }
+    return response.json();
+  },
+
+  async createProject(data: Omit<Project, 'id'>): Promise<Project> {
+    const response = await fetch(`${BASE_URL}/project`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create project');
+    }
+    return response.json();
+  },
+
+  async updateProject(id: number, data: Omit<Project, 'id'>): Promise<Project> {
+    const response = await fetch(`${BASE_URL}/project/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update project');
+    }
+    return response.json();
+  },
+
+  async deleteProject(id: number): Promise<void> {
+    const response = await fetch(`${BASE_URL}/project/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': getAuthHeader(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete project');
+    }
+  },
 };
 
 // Update these functions to use the api object methods
@@ -114,3 +166,9 @@ export const getExperiences = api.getExperiences;
 export const addExperience = api.createExperience;
 export const updateExperience = api.updateExperience;
 export const deleteExperience = api.deleteExperience;
+
+// Add these exports at the end of the file
+export const getProjects = api.getProjects;
+export const addProject = api.createProject;
+export const updateProject = api.updateProject;
+export const deleteProject = api.deleteProject;

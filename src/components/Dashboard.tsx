@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Box, Grid, Paper, Tabs, Tab } from '@mui/material';
+import { Container, Typography, Box, Paper, Tabs, Tab } from '@mui/material';
 import PersonalInfo from './PersonalInfo';
 import Experiences from './Experiences';
+import Projects from './Projects';
 import { api } from '../api';
 
 const Dashboard: React.FC = () => {
@@ -54,10 +55,12 @@ const Dashboard: React.FC = () => {
           <Tabs value={activeTab} onChange={handleTabChange} aria-label="dashboard tabs">
             <Tab label="Personal Information" />
             <Tab label="Experiences" />
+            <Tab label="Projects" />
           </Tabs>
           <Box sx={{ mt: 2 }}>
             {activeTab === 0 && <PersonalInfo />}
             {activeTab === 1 && <Experiences />}
+            {activeTab === 2 && <Projects />}
           </Box>
         </Paper>
       </Box>

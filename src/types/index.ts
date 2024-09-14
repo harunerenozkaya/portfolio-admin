@@ -24,3 +24,12 @@ export interface Experience {
   detail: string;
   usedSkills: string[];
 }
+
+export interface Project {
+  id: number;
+  name: string;
+  detail: string;
+  skills: string[];
+  logoUrl: string;
+  url: string;
+}
