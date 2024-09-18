@@ -5,6 +5,8 @@ import AddIcon from '@mui/icons-material/Add';
 import { api } from '../api';
 import { PersonalInformation, SocialMediaLink } from '../types';
 
+const DEFAULT_SOCIAL_MEDIA = ['Email', 'Github', 'Instagram', 'YouTube', 'LinkedIn', 'Twitter', 'Facebook'];
+
 const PersonalInfo: React.FC = () => {
   const [personalInfo, setPersonalInfo] = useState<PersonalInformation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,18 @@ const PersonalInfo: React.FC = () => {
       console.log("Fetching personal info...");
       const data = await api.getPersonalInformation();
       console.log("Personal info fetched:", data);
-      setPersonalInfo(data);
+
+      // For each default social media link, if it doesn't exist in the data, add it
+      let newSocialMediaLinks = data.socialMediaLinks;
+      DEFAULT_SOCIAL_MEDIA.forEach(platform => {
+        if (!newSocialMediaLinks.some(link => link.logo === platform)) {
+          newSocialMediaLinks.push({ logo: platform, url: '' });
+        }
+      });
+      // Update the data with the new social media links  
+      const updatedData = { ...data, socialMediaLinks: newSocialMediaLinks };
+
+      setPersonalInfo(updatedData);
       setFormData(data);
       setLoading(false);
     } catch (error) {
@@ -148,9 +161,11 @@ const PersonalInfo: React.FC = () => {
                   <TableCell component="th" scope="row">Social Media</TableCell>
                   <TableCell>
                     {personalInfo?.socialMediaLinks.map((link, index) => (
-                      <Typography key={index}>
-                        {link.logo}: <a href={link.url} target="_blank" rel="noopener noreferrer">{link.url}</a>
-                      </Typography>
+                      link.url && link.url.trim() !== '' && (
+                        <Typography key={index}>
+                          {link.logo}: <a href={link.url} target="_blank" rel="noopener noreferrer">{link.url}</a>
+                        </Typography>
+                      )
                     ))}
                   </TableCell>
                 </TableRow>
@@ -227,14 +242,17 @@ const PersonalInfo: React.FC = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mb: 2 }}>Social Media Links</Typography>
+              <Typography variant="h6" sx={{ mb: 2 , mt:2}}>Social Media Links</Typography>
               {formData?.socialMediaLinks.map((link, index) => (
                 <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <TextField
-                    label="Logo"
+                    label={DEFAULT_SOCIAL_MEDIA.includes(link.logo) ? link.logo : "Logo URL"}
                     value={link.logo}
                     onChange={(e) => handleSocialMediaChange(index, 'logo', e.target.value)}
-                    sx={{ mr: 1, flexGrow: 1 }}
+                    sx={{ mr: 1, width: '50%' }}
+                    InputProps={{
+                      readOnly: DEFAULT_SOCIAL_MEDIA.includes(link.logo),
+                    }}
                   />
                   <TextField
                     label="URL"
@@ -242,20 +260,23 @@ const PersonalInfo: React.FC = () => {
                     onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)}
                     sx={{ mr: 1, flexGrow: 1 }}
                   />
-                  <IconButton onClick={() => handleRemoveSocialMedia(index)}>
-                    <DeleteIcon />
-                  </IconButton>
+                  {!DEFAULT_SOCIAL_MEDIA.includes(link.logo) && (
+                    <IconButton onClick={() => handleRemoveSocialMedia(index)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </Box>
               ))}
               <Button 
                 startIcon={<AddIcon />} 
                 onClick={handleAddSocialMedia}
-                sx={{ mt: 2 }}
+                sx={{ mb: 2 }}
               >
                 Add Social Media Link
               </Button>
             </Grid>
             <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Personal Image</Typography>
               <TextField
                 fullWidth
                 label="Personal Image URL"

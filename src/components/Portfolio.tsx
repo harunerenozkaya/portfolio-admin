@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Typography, Box, Container, Grid, Avatar, Link, IconButton, List, ListItem, ListItemText, Toolbar } from '@mui/material';
-import { GitHub, LinkedIn, Twitter } from '@mui/icons-material';
+import { GitHub, LinkedIn, Twitter, Email, Facebook, Instagram, YouTube } from '@mui/icons-material';
 import { PersonalInformation, Experience, Project } from '../types';
 import { api } from '../api';
 import { Helmet } from 'react-helmet';
@@ -42,11 +42,17 @@ const Portfolio: React.FC = () => {
     return <Typography>Loading...</Typography>;
   }
 
-  const getSocialIcon = (logo: string) => {
+  const iconProps = { sx: { fontSize: 32 } };
+
+  const getSocialIcon = (logo: string): React.ReactElement | null => {
     switch (logo.toLowerCase()) {
-      case 'github': return <GitHub />;
-      case 'linkedin': return <LinkedIn />;
-      case 'twitter': return <Twitter />;
+      case 'github': return <GitHub {...iconProps} />;
+      case 'linkedin': return <LinkedIn {...iconProps} />;
+      case 'twitter': return <Twitter {...iconProps} />;
+      case 'email': return <Email {...iconProps} />;
+      case 'facebook': return <Facebook {...iconProps} />;
+      case 'instagram': return <Instagram {...iconProps} />;
+      case 'youtube': return <YouTube {...iconProps} />;
       default: return null;
     }
   };
@@ -126,9 +132,28 @@ const Portfolio: React.FC = () => {
               </Typography>
               <Box>
                 {personalInfo.socialMediaLinks.map((link, index) => (
-                  <IconButton key={index} href={link.url} target="_blank" rel="noopener noreferrer" sx={{ color: 'black', mr: 2, fontSize: '2rem' }}>
-                    {getSocialIcon(link.logo)}
-                  </IconButton>
+                  link.url && link.url.trim() !== '' && (
+                    <IconButton 
+                      key={index} 
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      sx={{ color: 'black', mr: 2, p: 0.5 }}
+                    >
+                      {getSocialIcon(link.logo) || (
+                        <Box 
+                          component="img"
+                          src={link.logo}
+                          alt={`${link.url} icon`}
+                          sx={{ 
+                            width: iconProps.sx.fontSize, 
+                            height: iconProps.sx.fontSize, 
+                            objectFit: 'contain'
+                          }}
+                        />
+                      )}
+                    </IconButton>
+                  )
                 ))}
               </Box>
             </Grid>
