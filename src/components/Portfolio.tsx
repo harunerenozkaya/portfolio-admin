@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Typography, Box, Container, Grid, Chip, Avatar, Link, IconButton, List, ListItem, ListItemText, Toolbar } from '@mui/material';
+import { Typography, Box, Container, Grid, Avatar, Link, IconButton, List, ListItem, ListItemText, Toolbar } from '@mui/material';
 import { GitHub, LinkedIn, Twitter } from '@mui/icons-material';
 import { PersonalInformation, Experience, Project } from '../types';
 import { api } from '../api';
@@ -195,10 +195,11 @@ const Portfolio: React.FC = () => {
           <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center' }}>
             Experience
           </Typography>
-          <Grid container spacing={4}>
+          <Box sx={{ height: '10px' }} />
+          <Grid container spacing={0}>
             {experiences.map((experience) => (
               <Grid item xs={12} key={experience.id}>
-                <Box sx={{ p: 3, display: 'flex', alignItems: 'flex-start' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                   <Box sx={{ mr: 3, flexShrink: 0 }}>
                     <Avatar
                       src={experience.companyLogo}
@@ -236,22 +237,40 @@ const Portfolio: React.FC = () => {
           <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center' }}>
             Projects
           </Typography>
-          <Grid container spacing={4}>
+          <Box sx={{ height: '10px' }} />
+          <Grid container spacing={0}>
             {projects.map((project) => (
-              <Grid item xs={12} sm={6} md={4} key={project.id}>
-                <Box sx={{ p: 3, height: '100%' }}>
-                  <Typography variant="h5" gutterBottom fontWeight="bold">{project.name}</Typography>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    {project.detail}
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                    {project.skills.map((skill, index) => (
-                      <Chip key={index} label={skill} size="medium" sx={{ bgcolor: '#000000', color: 'white', fontSize: '0.9rem' }} />
-                    ))}
+              <Grid item xs={12} key={project.id}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                  <Box sx={{ mr: 3, flexShrink: 0 }}>
+                    <Link href={project.url} target="_blank" rel="noopener noreferrer">
+                      <Avatar
+                        src={project.logoUrl}
+                        alt={`${project.name} image`}
+                        sx={{
+                          width: 200,
+                          height: 200,
+                          objectFit: 'contain',
+                          borderRadius: '32px',
+                          cursor: 'pointer'
+                        }}
+                        variant="rounded"
+                      />
+                    </Link>
                   </Box>
-                  <Link href={project.url} target="_blank" rel="noopener noreferrer" sx={{ color: '#000000', fontSize: '1.1rem' }}>
-                    View Project
-                  </Link>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Link href={project.url} target="_blank" rel="noopener noreferrer" sx={{ color: 'inherit', textDecoration: 'none' }}>
+                      <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ cursor: 'pointer' }}>
+                        {project.name}
+                      </Typography>
+                    </Link>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      {project.detail}
+                    </Typography>
+                    <Typography variant="h6">
+                      Skills: {project.skills.join(', ')}
+                    </Typography>
+                  </Box>
                 </Box>
               </Grid>
             ))}
