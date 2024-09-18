@@ -5,6 +5,12 @@ import { PersonalInformation, Experience, Project } from '../types';
 import { api } from '../api';
 import { Helmet } from 'react-helmet';
 
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'Present';
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+};
+
 const Portfolio: React.FC = () => {
   const [personalInfo, setPersonalInfo] = useState<PersonalInformation | null>(null);
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -187,24 +193,37 @@ const Portfolio: React.FC = () => {
         {/* Experiences Section */}
         <Box ref={experienceRef} sx={{ mb: 12 }}>
           <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center' }}>
-            Work Experience
+            Experience
           </Typography>
           <Grid container spacing={4}>
             {experiences.map((experience) => (
               <Grid item xs={12} key={experience.id}>
-                <Box sx={{ p: 3 }}>
-                  <Typography variant="h5" fontWeight="bold">{experience.role}</Typography>
-                  <Typography variant="h6" color="text.secondary">
-                    {experience.companyName}
-                  </Typography>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    {experience.startDate} - {experience.endDate || 'Present'}
-                  </Typography>
-                  <Typography variant="h6" sx={{ mb: 2 }}>{experience.detail}</Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {experience.usedSkills.map((skill, index) => (
-                      <Chip key={index} label={skill} size="medium" sx={{ bgcolor: '#000000', color: 'white', fontSize: '1rem' }} />
-                    ))}
+                <Box sx={{ p: 3, display: 'flex', alignItems: 'flex-start' }}>
+                  <Box sx={{ mr: 3, flexShrink: 0 }}>
+                    <Avatar
+                      src={experience.companyLogo}
+                      alt={`${experience.companyName} logo`}
+                      sx={{
+                        width: 200,
+                        height: 200,
+                        objectFit: 'contain',
+                        borderRadius: '32px'  // This adds rounded corners
+                      }}
+                      variant="rounded"  // Changed from "square" to "rounded"
+                    />
+                  </Box>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="h5" fontWeight="bold">{experience.role}</Typography>
+                    <Typography variant="h6" color="text.secondary">
+                      {experience.companyName}
+                    </Typography>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      {formatDate(experience.startDate ?? '')} - {formatDate(experience.endDate ?? '')}
+                    </Typography>
+                    <Typography variant="h6" sx={{ mb: 2 }}>{experience.detail}</Typography>
+                    <Typography variant="h6">
+                      Skills: {experience.usedSkills.join(', ')}
+                    </Typography>
                   </Box>
                 </Box>
               </Grid>
